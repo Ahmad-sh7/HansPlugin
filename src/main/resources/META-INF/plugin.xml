@@ -123,9 +123,16 @@ limitations under the License.
         <liveTemplateContext implementation="se.ch.HAnS.codeCompletion.AnyContext" contextId="ANY"/>
         <liveTemplateContext implementation="se.ch.HAnS.codeCompletion.CommentContext" contextId="COMMENT"/>
         <!-- &end[LiveTemplate] -->
+        <notificationGroup id="File mapped to feature group" displayType="BALLOON" key="notification.group.MappingService"/>
+
     </extensions>
 
     <actions>
+
+        <action id="actions.TestAction" class="se.ch.HAnS.fileAnnotation.TestAction" text="Test">
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
+        </action>
+
         <action id="RenameFeature"
                 class="se.ch.HAnS.actions.RenameAction"
                 text="Rename..."
