@@ -44,17 +44,20 @@ public class MappingService {
         PsiDirectory psiDirectory = featureToFile.getParent();
         PsiFile[] psiFiles = psiDirectory.getFiles();
         String message = String.valueOf(featureToFile.getText().contains(psiFiles[0].getName()));
-
+        String[] FeuturesSplitted = featureToFile.getText().split("\\R");
+        //Messages.showMessageDialog(FeuturesSplitted[0], "hello", Messages.getInformationIcon());
         for (PsiFile File : psiFiles) {
-            Boolean isInFeatureToFile = featureToFile.getText().contains(File.getName());
-            if (isInFeatureToFile) {
-                String feature = featureToFile.getText().split("\\R")[1];
-                displayNotificationForFile(File, feature);
-                // Messages.showMessageDialog(message, "hello", Messages.getInformationIcon());
+            Boolean isInFeatureToFile = true;
+            for(int i = 0; i < FeuturesSplitted.length ; i++){
+                isInFeatureToFile = FindClassInFeuture(FeuturesSplitted[i], File);
+                if (isInFeatureToFile) {
+                    displayNotificationForFile(File, FeuturesSplitted[i+1]);
+                }
             }
         }
-
-
+    }
+    public Boolean FindClassInFeuture(String feature, PsiFile File){
+        return feature.contains(File.getName());
     }
     //Notify User
     public void displayNotificationForFile(PsiFile file, String feature) {
