@@ -32,31 +32,32 @@ public class MappingService {
     public MappingService(Project project) {
         this.myProject = project;
     }
-    public void ServiceMethod() {
+    public void ServiceMethod(VirtualFile openedVirtualFile) {
 
         Collection<VirtualFile> vfs = FilenameIndex.getVirtualFilesByName(".feature-to-file", GlobalSearchScope.allScope(myProject));
         Iterator<VirtualFile> it = vfs.iterator();
-        VirtualFile vf = it.next();
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        PsiFile featureToFile = psiManager.findFile(vf);
+        PsiFile openedFile = psiManager.findFile(openedVirtualFile);
+        
+        while (it.hasNext()) {
+            VirtualFile vf = it.next();
+            PsiFile featureToFile = psiManager.findFile(vf);
 
-        //Get all name of Files in the current directory
-        PsiDirectory psiDirectory = featureToFile.getParent();
-        PsiFile[] psiFiles = psiDirectory.getFiles();
-        String message = String.valueOf(featureToFile.getText().contains(psiFiles[0].getName()));
-        String[] FeuturesSplitted = featureToFile.getText().split("\\R");
-        //Messages.showMessageDialog(FeuturesSplitted[0], "hello", Messages.getInformationIcon());
-        for (PsiFile File : psiFiles) {
-            Boolean isInFeatureToFile = true;
-            for(int i = 0; i < FeuturesSplitted.length ; i++){
-                isInFeatureToFile = FindClassInFeuture(FeuturesSplitted[i], File);
+            //Get all name of Files in the current directory
+            PsiDirectory psiDirectory = featureToFile.getParent();
+            PsiFile[] psiFiles = psiDirectory.getFiles();
+            String[] FeaturesSplitted = featureToFile.getText().split("\\R");
+
+            Boolean isInFeatureToFile = false;
+            for(int i = 0; i < FeaturesSplitted.length ; i++){
+                isInFeatureToFile = FindClassInFeatureToFile(FeaturesSplitted[i], openedFile);
                 if (isInFeatureToFile) {
-                    displayNotificationForFile(File, FeuturesSplitted[i+1]);
+                    displayNotificationForFile(openedFile, FeaturesSplitted[i+1]);
                 }
             }
         }
     }
-    public Boolean FindClassInFeuture(String feature, PsiFile File){
+    public Boolean FindClassInFeatureToFile(String feature, PsiFile File){
         return feature.contains(File.getName());
     }
     //Notify User
@@ -65,7 +66,7 @@ public class MappingService {
             Notification notification = new Notification(
                     "File mapped to feature group",
                     "File Mapped!",
-                    "The file " + file.getName() + " is mapped to the feature " + feature,
+                    "The file " + file.getName() + " is mapped to the feature(s) " + feature,
                     NotificationType.INFORMATION);
             Notifications.Bus.notify(notification, myProject);
         });

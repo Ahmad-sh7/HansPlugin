@@ -125,13 +125,15 @@ limitations under the License.
         <!-- &end[LiveTemplate] -->
         <notificationGroup id="File mapped to feature group" displayType="BALLOON" key="notification.group.MappingService"/>
 
+
     </extensions>
 
-    <actions>
+    <applicationListeners>
+        <listener class="se.ch.HAnS.fileAnnotation.FeatureToFileAddedListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    </applicationListeners>
 
-        <action id="actions.TestAction" class="se.ch.HAnS.fileAnnotation.TestAction" text="Test">
-            <add-to-group group-id="ToolsMenu" anchor="first"/>
-        </action>
+    <actions>
 
         <action id="RenameFeature"
                 class="se.ch.HAnS.actions.RenameAction"
