@@ -167,5 +167,10 @@ limitations under the License.
             <add-to-group
                     group-id="EditorPopupMenu" anchor="first" />
         </action>
+
+        <action id="RemoveFeature" class="se.ch.HAnS.actions.RemoveFeature" text="Remove..."
+                description="Remove Feature">
+            <add-to-group group-id="StructureViewPopupMenu" anchor="after" relative-to-action="DeleteFeature"/>
+        </action>
     </actions>
 </idea-plugin>
