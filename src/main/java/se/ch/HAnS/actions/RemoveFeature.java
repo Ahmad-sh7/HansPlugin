@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -34,15 +35,14 @@ public class RemoveFeature extends AnAction {
                 FileTypeManager.getInstance().getFileTypeByExtension("java")
                 ,GlobalSearchScope.projectScope(Objects.requireNonNull(myProject)));
 
-
         Iterator<VirtualFile> it = javaFiles.iterator();
         PsiManager psiManager = PsiManager.getInstance(myProject);
-
 
 
         while (it.hasNext()) {
 
             PsiFile openedFile = psiManager.findFile(it.next());
+            Document document = PsiDocumentManager.getInstance(myProject).getDocument(openedFile);
 
             openedFile.accept(new PsiRecursiveElementVisitor() {
                 @Override
@@ -68,31 +68,45 @@ public class RemoveFeature extends AnAction {
                              reference.set(comment);
                         } else {
                             if (comment.getText().contains("&end")) {
-                                deletePsiElementRange(myProject, reference.get(), comment);
+                                deletePsiElementRange(myProject, reference.get(), comment, document);
+                            } else{
+                                if (comment.getText().contains("&line")) {
+                                    ApplicationManager.getApplication().invokeLater(() -> {
+                                        WriteCommandAction.runWriteCommandAction(myProject, () -> {
+
+
+                                            document.deleteString(document.getLineStartOffset(lineNumber), comment.getTextOffset() + comment.getTextLength() + 1);
+                                        });
+                                    });
+                                }
                             }
                         }
                     }
-
                 }
             });
         }
     }
-    public void deletePsiElementRange(Project myProject, PsiElement startElement, PsiElement endElement) {
-
-
-            ApplicationManager.getApplication().invokeLater(() -> {
-                WriteCommandAction.runWriteCommandAction(myProject, () -> {
-                    PsiElement current = startElement;
-                    while (current.getNextSibling() != null) {
+    public void deletePsiElementRange(Project myProject, PsiElement startElement, PsiElement endElement, Document document) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            WriteCommandAction.runWriteCommandAction(myProject, () -> {
+                PsiElement current = startElement;
+                while (current.getNextSibling() != endElement) {
+                    if (current.getNextSibling() == null) {
+                        return;
+                        // current = current.getParent().findElementAt(current.getTextOffset() + current.getTextLength());
+                    } else{
                         current = current.getNextSibling();
-                        // Messages.showMessageDialog(myProject, current.toString(), "Hi", Messages.getInformationIcon());
                     }
-                    startElement.getParent().deleteChildRange(startElement, current);
-                    endElement.delete();
-                });
+                    Messages.showMessageDialog(myProject, current.toString(), "Hi", Messages.getInformationIcon());
+                }
+                current = current.getPrevSibling();
+                //Messages.showMessageDialog(myProject, startElement.getText(), "Hi", Messages.getInformationIcon());
+                //Messages.showMessageDialog(myProject, current.getText(), "Hi", Messages.getInformationIcon());
+                //Messages.showMessageDialog(myProject, endElement.getText(), "Hi", Messages.getInformationIcon());
+                startElement.getParent().deleteChildRange(startElement, current);
+                endElement.delete();
             });
-
-
-
+        });
+        PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
     }
 }
