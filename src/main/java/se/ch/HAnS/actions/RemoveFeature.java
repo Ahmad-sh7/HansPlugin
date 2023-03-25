@@ -18,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import io.ktor.http.ContentType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Objects;
@@ -35,8 +36,10 @@ public class RemoveFeature extends AnAction {
                 FileTypeManager.getInstance().getFileTypeByExtension("java")
                 ,GlobalSearchScope.projectScope(Objects.requireNonNull(myProject)));
 
+
         Iterator<VirtualFile> it = javaFiles.iterator();
         PsiManager psiManager = PsiManager.getInstance(myProject);
+
 
 
         while (it.hasNext()) {
@@ -56,28 +59,34 @@ public class RemoveFeature extends AnAction {
                 @Override
 
                 public void visitComment(@NotNull PsiComment comment) {
-                    String feuturename =  e.getData(PlatformDataKeys.PSI_ELEMENT).getText();
+                    String feuturename = e.getData(PlatformDataKeys.PSI_ELEMENT).getText();
                     String[] FeaturesSplitted = feuturename.split("\\R");
-                    //Messages.showMessageDialog(myProject, FeaturesSplitted[0], "Hi", Messages.getInformationIcon());
-                    if (comment.getText().contains(FeaturesSplitted[0])) {
-                        int lineNumber = openedFile.getViewProvider().getDocument().getLineNumber(comment.getTextRange().getStartOffset() + 1);
-                        System.out.println("Found Update at in " + openedFile.getName() + "  at line number " + (lineNumber + 1));
-                        //final AtomicReference<PsiComment> reference = new AtomicReference<>();
 
-                        if (comment.getText().contains("&begin")) {
-                             reference.set(comment);
-                        } else {
-                            if (comment.getText().contains("&end")) {
-                                deletePsiElementRange(myProject, reference.get(), comment, document);
-                            } else{
-                                if (comment.getText().contains("&line")) {
-                                    ApplicationManager.getApplication().invokeLater(() -> {
-                                        WriteCommandAction.runWriteCommandAction(myProject, () -> {
+                    for(int i = 0; i < FeaturesSplitted.length; i++) {
+                        //Messages.showMessageDialog(myProject, FeaturesSplitted[i], "Hi", Messages.getInformationIcon());
+                        String FeatureWithoutSpaces = FeaturesSplitted[i].replaceAll("\\s+","");
+                        if (comment.getText().contains(FeatureWithoutSpaces)) {
+                            int lineNumber = openedFile.getViewProvider().getDocument().getLineNumber(comment.getTextRange().getStartOffset() + 1);
+                            System.out.println("Found Update at in " + openedFile.getName() + "  at line number " + (lineNumber + 1));
+                            //final AtomicReference<PsiComment> reference = new AtomicReference<>();
 
+                            if (comment.getText().contains("&begin")) {
+                                Messages.showMessageDialog(myProject, comment.getText(), "Hi", Messages.getInformationIcon());
+                                reference.set(comment);
+                            } else {
+                                if (comment.getText().contains("&end")) {
+                                    Messages.showMessageDialog(myProject, comment.getText(), "Hi", Messages.getInformationIcon());
+                                    deleteLineCodesBetween(myProject,openedFile, reference.get(), comment);
+                                } else {
 
-                                            document.deleteString(document.getLineStartOffset(lineNumber), comment.getTextOffset() + comment.getTextLength() + 1);
+                                    if (comment.getText().contains("&line")) {
+                                        Messages.showMessageDialog(myProject, comment.getText(), "Hi", Messages.getInformationIcon());
+                                        ApplicationManager.getApplication().invokeLater(() -> {
+                                            WriteCommandAction.runWriteCommandAction(myProject, () -> {
+                                                document.deleteString(document.getLineStartOffset(lineNumber), comment.getTextOffset() + comment.getTextLength() + 1);
+                                            });
                                         });
-                                    });
+                                    }
                                 }
                             }
                         }
@@ -86,27 +95,74 @@ public class RemoveFeature extends AnAction {
             });
         }
     }
-    public void deletePsiElementRange(Project myProject, PsiElement startElement, PsiElement endElement, Document document) {
+    //Messages.showMessageDialog(myProject, FeaturesSplitted[0], "Hi", Messages.getInformationIcon());
+    /*public void deletePsiElementRange(Project myProject, PsiElement startElement, PsiElement endElement, Document document) {
         ApplicationManager.getApplication().invokeLater(() -> {
             WriteCommandAction.runWriteCommandAction(myProject, () -> {
                 PsiElement current = startElement;
-                while (current.getNextSibling() != endElement) {
-                    if (current.getNextSibling() == null) {
-                        return;
-                        // current = current.getParent().findElementAt(current.getTextOffset() + current.getTextLength());
-                    } else{
-                        current = current.getNextSibling();
-                    }
+                while (current.getNextSibling() != null) {
+                    current = current.getNextSibling();
                     Messages.showMessageDialog(myProject, current.toString(), "Hi", Messages.getInformationIcon());
                 }
                 current = current.getPrevSibling();
-                //Messages.showMessageDialog(myProject, startElement.getText(), "Hi", Messages.getInformationIcon());
-                //Messages.showMessageDialog(myProject, current.getText(), "Hi", Messages.getInformationIcon());
-                //Messages.showMessageDialog(myProject, endElement.getText(), "Hi", Messages.getInformationIcon());
                 startElement.getParent().deleteChildRange(startElement, current);
                 endElement.delete();
             });
         });
         PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
     }
+
+    */
+    public static void visitAllElements(PsiElement element, PsiElementVisitor visitor) {
+        element.acceptChildren(new PsiElementVisitor() {
+            @Override
+            public void visitElement(PsiElement element) {
+                // Call the visitor on the element
+                visitor.visitElement(element);
+                // Recursively visit the element's children
+                element.acceptChildren(this);
+            }
+        });
+    }
+
+
+    public static void deleteLineCodesBetween(Project myProject, PsiFile file, PsiElement start, PsiElement end) {
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+            WriteCommandAction.runWriteCommandAction(myProject, () -> {
+
+                visitAllElements(file, new PsiElementVisitor() {
+                    @Override
+                    public void visitElement(PsiElement element) {
+                        if(element == start){
+                            /*
+                            PsiElement currentElement = start.getNextSibling();
+
+                            while (currentElement != end) {
+                                PsiElement nextSibling = currentElement.getNextSibling();
+                                currentElement.delete();
+                                currentElement = nextSibling;
+                            }*/
+                            element.getParent().delete();
+                            end.delete();
+                        }
+                    }
+                });
+            });
+        });
+    }
+
+    private static boolean isBetween(PsiElement element, PsiElement start, PsiElement end) {
+        PsiElement current = element;
+
+        // Traverse up the PsiTree until we reach the common ancestor of the start and end elements
+        while (current != null && current != start && current != end) {
+            current = current.getParent();
+        }
+
+        // If we reached the start or end element, the element is between them
+        return current == start || current == end;
+    }
+
+
 }
