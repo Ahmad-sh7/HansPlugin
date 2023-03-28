@@ -63,8 +63,10 @@ public class RemoveFeature extends AnAction {
                     String[] FeaturesSplitted = feuturename.split("\\R");
 
                     for(int i = 0; i < FeaturesSplitted.length; i++) {
-                        //Messages.showMessageDialog(myProject, FeaturesSplitted[i], "Hi", Messages.getInformationIcon());
+
                         String FeatureWithoutSpaces = FeaturesSplitted[i].replaceAll("\\s+","");
+                        if(FeatureWithoutSpaces == "") continue;
+                        //Messages.showMessageDialog(myProject, FeatureWithoutSpaces, "Hi", Messages.getInformationIcon());
                         if (comment.getText().contains(FeatureWithoutSpaces)) {
                             int lineNumber = openedFile.getViewProvider().getDocument().getLineNumber(comment.getTextRange().getStartOffset() + 1);
                             System.out.println("Found Update at in " + openedFile.getName() + "  at line number " + (lineNumber + 1));
