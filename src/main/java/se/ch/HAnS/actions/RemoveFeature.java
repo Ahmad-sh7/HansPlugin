@@ -55,7 +55,7 @@ public class RemoveFeature extends AnAction {
                 }
 
                 final AtomicReference<PsiComment> reference = new AtomicReference<>();
-                PsiComment startcomment = null;
+
                 @Override
 
                 public void visitComment(@NotNull PsiComment comment) {
@@ -66,23 +66,18 @@ public class RemoveFeature extends AnAction {
 
                         String FeatureWithoutSpaces = FeaturesSplitted[i].replaceAll("\\s+","");
                         if(FeatureWithoutSpaces == "") continue;
-                        //Messages.showMessageDialog(myProject, FeatureWithoutSpaces, "Hi", Messages.getInformationIcon());
                         if (comment.getText().contains(FeatureWithoutSpaces)) {
                             int lineNumber = openedFile.getViewProvider().getDocument().getLineNumber(comment.getTextRange().getStartOffset() + 1);
                             System.out.println("Found Update at in " + openedFile.getName() + "  at line number " + (lineNumber + 1));
-                            //final AtomicReference<PsiComment> reference = new AtomicReference<>();
 
                             if (comment.getText().contains("&begin")) {
-                                Messages.showMessageDialog(myProject, comment.getText(), "Hi", Messages.getInformationIcon());
                                 reference.set(comment);
                             } else {
                                 if (comment.getText().contains("&end")) {
-                                    Messages.showMessageDialog(myProject, comment.getText(), "Hi", Messages.getInformationIcon());
                                     deleteLineCodesBetween(myProject,openedFile, reference.get(), comment);
                                 } else {
 
                                     if (comment.getText().contains("&line")) {
-                                        Messages.showMessageDialog(myProject, comment.getText(), "Hi", Messages.getInformationIcon());
                                         ApplicationManager.getApplication().invokeLater(() -> {
                                             WriteCommandAction.runWriteCommandAction(myProject, () -> {
                                                 document.deleteString(document.getLineStartOffset(lineNumber), comment.getTextOffset() + comment.getTextLength() + 1);
@@ -97,24 +92,7 @@ public class RemoveFeature extends AnAction {
             });
         }
     }
-    //Messages.showMessageDialog(myProject, FeaturesSplitted[0], "Hi", Messages.getInformationIcon());
-    /*public void deletePsiElementRange(Project myProject, PsiElement startElement, PsiElement endElement, Document document) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-            WriteCommandAction.runWriteCommandAction(myProject, () -> {
-                PsiElement current = startElement;
-                while (current.getNextSibling() != null) {
-                    current = current.getNextSibling();
-                    Messages.showMessageDialog(myProject, current.toString(), "Hi", Messages.getInformationIcon());
-                }
-                current = current.getPrevSibling();
-                startElement.getParent().deleteChildRange(startElement, current);
-                endElement.delete();
-            });
-        });
-        PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
-    }
 
-    */
     public static void visitAllElements(PsiElement element, PsiElementVisitor visitor) {
         element.acceptChildren(new PsiElementVisitor() {
             @Override
@@ -154,17 +132,6 @@ public class RemoveFeature extends AnAction {
         });
     }
 
-    private static boolean isBetween(PsiElement element, PsiElement start, PsiElement end) {
-        PsiElement current = element;
-
-        // Traverse up the PsiTree until we reach the common ancestor of the start and end elements
-        while (current != null && current != start && current != end) {
-            current = current.getParent();
-        }
-
-        // If we reached the start or end element, the element is between them
-        return current == start || current == end;
-    }
 
 
 }
